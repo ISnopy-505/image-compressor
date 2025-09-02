@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>ضغط الصور - Image Compressor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      text-align: center;
+      padding: 50px;
+      direction: rtl;
+    }
+    .container {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    #drop-area {
+      border: 2px dashed #4CAF50;
+      border-radius: 15px;
+      padding: 30px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      background: #fafafa;
+    }
+    #drop-area.hover {
+      background: #e8f5e9;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>💡 اضغط صورك بسهولة</h2>
+    <div id="drop-area">
+      اسحب الصورة هنا أو اضغط لاختيارها
+      <input type="file" id="fileInput" accept="image/*" hidden>
+    </div>
+    <button id="download" style="display:none;">تحميل الصورة المضغوطة</button>
+    <div class="info" id="info"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@latest/dist/browser-image-compression.js"></script>
+  <script>
+    const dropArea = document.getElementById("drop-area");
+    const fileInput = document.getElementById("fileInput");
+    const downloadBtn = document.getElementById("download");
+    const info = document.getElementById("info");
+    let originalFile;
+
+    dropArea.addEventListener("click", () => fileInput.click());
+    dropArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropArea.classList.add("hover");
+    });
+    dropArea.addEventListener("dragleave", () => dropArea.classList.remove("hover"));
+    dropArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropArea.classList.remove("hover");
+      handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+
+    async function handleFile(file) {
+      if (!file) return;
+      originalFile = file;
+
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1280,
+        useWebWorker: true
+      };
+
+      try {
+        const compressedFile = await imageCompression(file, options);
+        const beforeSize = (file.size / 1024).toFixed(1);
+        const afterSize = (compressedFile.size / 1024).toFixed(1);
+        info.innerHTML = `الحجم قبل: ${beforeSize} KB <br> الحجم بعد: ${afterSize} KB`;
+
+        const downloadLink = URL.createObjectURL(compressedFile);
+        downloadBtn.style.display = "block";
+        downloadBtn.onclick = () => {
+          const a = document.createElement("a");
+          a.href = downloadLink;
+          a.download = "compressed_" + file.name;
+          a.click();
+        };
+      } catch (error) {
+        alert("خطأ أثناء الضغط: " + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
